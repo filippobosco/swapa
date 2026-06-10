@@ -1,0 +1,25 @@
+---
+import Base from '../layouts/Base.astro';
+import Header from '../components/Header.astro';
+import Hero from '../components/Hero.astro';
+import Levers from '../components/Levers.astro';
+import TestDrive from '../components/TestDrive.astro';
+import LeadForm from '../components/LeadForm.astro';
+import Faq from '../components/Faq.astro';
+import Footer from '../components/Footer.astro';
+import ConsentBanner from '../components/ConsentBanner.astro';
+
+export const prerender = false;
+---
+<Base>
+  <Header />
+  <main>
+    <Hero />
+    <Levers />
+    <TestDrive />
+    <LeadForm />
+    <Faq />
+  </main>
+  <Footer />
+  <ConsentBanner />
+</Base>

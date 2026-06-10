@@ -1,0 +1,62 @@
+---
+// Hero — immagine prodotto cinematografica con overlay scuro (mood editoriale,
+// vedi §3/§4). Headline premium senza "GRATIS" urlato; sub con l'offerta
+// (1 ora, a Pero). CTA in accent → scrolla al form. Mobile-first.
+---
+<section id="hero" class="relative isolate flex min-h-[100svh] flex-col justify-end overflow-hidden">
+  <!-- Sfondo prodotto -->
+  <img
+    src="/images/exterior.png"
+    alt="SWAPA — la micro auto elettrica urbana"
+    width="2560"
+    height="1440"
+    fetchpriority="high"
+    class="absolute inset-0 -z-10 h-full w-full object-cover object-center"
+  />
+  <!-- Overlay scuro per leggibilità (taglio editoriale) -->
+  <div
+    class="absolute inset-0 -z-10 bg-gradient-to-t from-ink via-ink/70 to-ink/30"
+    aria-hidden="true"
+  ></div>
+  <div
+    class="absolute inset-0 -z-10 bg-ink/30"
+    aria-hidden="true"
+  ></div>
+
+  <div class="mx-auto w-full max-w-content px-6 pb-16 pt-28 md:px-10 md:pb-24">
+    <p class="eyebrow mb-5 animate-[fadeup_0.6s_ease-out]">Test drive · Milano</p>
+
+    <h1 class="max-w-3xl text-4xl font-800 uppercase leading-[1.05] tracking-tight sm:text-5xl md:text-6xl lg:text-7xl">
+      L'icona elettrica<br class="hidden sm:block" /> di Milano.
+      <span class="text-accent">Vieni a guidarla.</span>
+    </h1>
+
+    <p class="mt-6 max-w-xl text-lg font-300 leading-relaxed text-white/80 md:text-xl">
+      Un'ora al volante, senza impegno e senza pressione.
+      Ti aspettiamo a Pero, a due passi da Milano.
+    </p>
+
+    <div class="mt-9">
+      <a href="#form" class="btn-accent w-full sm:w-auto">
+        Prenota il tuo test drive
+      </a>
+      <p class="mt-3 text-xs font-300 text-white/55">
+        Senza impegno · patentino AM sufficiente
+      </p>
+    </div>
+  </div>
+
+  <!-- Indicatore di scroll -->
+  <div class="pointer-events-none mx-auto hidden w-full max-w-content px-10 pb-6 md:block">
+    <span class="text-[0.65rem] font-400 uppercase tracking-widest2 text-white/40">
+      Scorri ↓
+    </span>
+  </div>
+</section>
+
+<style>
+  @keyframes fadeup {
+    from { opacity: 0; transform: translateY(12px); }
+    to   { opacity: 1; transform: translateY(0); }
+  }
+</style>

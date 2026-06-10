@@ -1,0 +1,10 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 360 90" role="img" aria-label="SWAPA">
+  <!-- Wordmark vettoriale semplice, coerente col brand (accent #4ECBA8).
+       Ricostruzione pulita per la resa nell'header; il PNG ufficiale resta in logo-swapa.png. -->
+  <text x="0" y="68"
+        font-family="Poppins, system-ui, sans-serif"
+        font-weight="800"
+        font-size="78"
+        letter-spacing="2"
+        fill="#4ECBA8">SWAPA</text>
+</svg>

@@ -1,0 +1,180 @@
+---
+// Form principale (vedi §6). Submit → endpoint server-side /api/lead → webhook n8n.
+// Gli UTM vengono letti dalla URL (e persistiti in sessione) e inclusi nel payload.
+// Nessuna credenziale lato client.
+---
+<section id="form" class="section-pad bg-ink">
+  <div class="mx-auto max-w-content">
+    <div class="mx-auto max-w-xl">
+      <p class="eyebrow mb-4 text-center">Prenota ora</p>
+      <h2 class="text-center text-3xl font-800 uppercase leading-tight tracking-tight md:text-4xl">
+        Lascia i tuoi dati.<br />Pensiamo a tutto noi.
+      </h2>
+      <p class="mx-auto mt-4 max-w-md text-center font-300 text-white/60">
+        Ti ricontattiamo per fissare il tuo test drive a Pero. Le agende si riempiono
+        in fretta: scegli lo slot finché ci sono date libere.
+      </p>
+
+      <form id="lead-form" class="mt-10 space-y-5" novalidate>
+        <div class="grid gap-5 sm:grid-cols-2">
+          <div>
+            <label for="first_name" class="form-label">Nome *</label>
+            <input id="first_name" name="first_name" type="text" required autocomplete="given-name" class="form-input" />
+          </div>
+          <div>
+            <label for="last_name" class="form-label">Cognome *</label>
+            <input id="last_name" name="last_name" type="text" required autocomplete="family-name" class="form-input" />
+          </div>
+        </div>
+
+        <div>
+          <label for="email" class="form-label">Email *</label>
+          <input id="email" name="email" type="email" required autocomplete="email" class="form-input" />
+        </div>
+
+        <div class="grid gap-5 sm:grid-cols-2">
+          <div>
+            <label for="phone" class="form-label">Telefono *</label>
+            <input id="phone" name="phone" type="tel" required autocomplete="tel" inputmode="tel" class="form-input" />
+          </div>
+          <div>
+            <label for="provincia" class="form-label">Provincia *</label>
+            <input id="provincia" name="provincia" type="text" required autocomplete="address-level2" placeholder="es. Milano" class="form-input" />
+          </div>
+        </div>
+
+        <div>
+          <label for="message" class="form-label">Messaggio <span class="text-muted">(opzionale)</span></label>
+          <textarea id="message" name="message" rows="3" class="form-input resize-none"></textarea>
+        </div>
+
+        <!-- Consenso GDPR (obbligatorio) -->
+        <label class="flex cursor-pointer items-start gap-3 text-sm font-300 text-white/70">
+          <input id="consent" name="consent" type="checkbox" required
+                 class="mt-1 h-5 w-5 shrink-0 rounded border-white/30 bg-transparent text-accent accent-accent" />
+          <span>
+            Ho letto la
+            <a href="https://www.swapa.it/privacy-policy" target="_blank" rel="noopener noreferrer"
+               class="text-accent underline underline-offset-2">privacy policy</a>
+            e acconsento al trattamento dei miei dati per essere ricontattato/a (Reg. UE 679/2016). *
+          </span>
+        </label>
+
+        <!-- I parametri di tracking (utm, fbclid, gclid, macro Meta) vengono letti
+             dall'URL e aggiunti al payload via JS: vedi <script> in fondo. -->
+
+
+        <button type="submit" id="lead-submit" class="btn-accent w-full">
+          <span id="submit-label">Prenota il tuo test drive</span>
+        </button>
+
+        <p id="form-error" class="hidden text-center text-sm font-400 text-red-400" role="alert"></p>
+        <p class="text-center text-xs font-300 text-white/40">
+          I tuoi dati restano riservati. Niente spam, solo l'organizzazione del test drive.
+        </p>
+      </form>
+    </div>
+  </div>
+</section>
+
+<style>
+  .form-label {
+    @apply mb-2 block text-xs font-500 uppercase tracking-wide text-white/60;
+  }
+  .form-input {
+    @apply w-full rounded-xl border border-white/15 bg-white/[0.04] px-4 py-3.5
+           font-400 text-white placeholder-white/30 transition-colors
+           focus:border-accent focus:outline-none focus:ring-1 focus:ring-accent;
+  }
+  .form-input[aria-invalid='true'] {
+    @apply border-red-400/70 focus:border-red-400 focus:ring-red-400;
+  }
+</style>
+
+<script>
+  // ── Tracking: leggi dalla URL e persisti in sessione ──
+  // UTM classici + click ID (fbclid/gclid). Sono i campi che n8n inoltra a Relatia
+  // e che finiscono sul Google Sheet (colonne Source/Medium/Campaign/gclid/fbclid).
+  const TRACKING_KEYS = [
+    'utm_source', 'utm_medium', 'utm_campaign',
+    'fbclid', 'gclid',
+  ] as const;
+  const params = new URLSearchParams(window.location.search);
+
+  function readTracking(): Record<string, string> {
+    const out: Record<string, string> = {};
+    for (const key of TRACKING_KEYS) {
+      const fromUrl = params.get(key);
+      if (fromUrl) sessionStorage.setItem(key, fromUrl);
+      out[key] = fromUrl ?? sessionStorage.getItem(key) ?? '';
+    }
+    return out;
+  }
+
+  const form = document.getElementById('lead-form') as HTMLFormElement;
+  const submitBtn = document.getElementById('lead-submit') as HTMLButtonElement;
+  const submitLabel = document.getElementById('submit-label') as HTMLSpanElement;
+  const errorEl = document.getElementById('form-error') as HTMLParagraphElement;
+
+  function showError(msg: string) {
+    errorEl.textContent = msg;
+    errorEl.classList.remove('hidden');
+  }
+
+  form?.addEventListener('submit', async (e) => {
+    e.preventDefault();
+    errorEl.classList.add('hidden');
+
+    // validazione nativa
+    if (!form.checkValidity()) {
+      form.reportValidity();
+      return;
+    }
+
+    submitBtn.disabled = true;
+    submitBtn.classList.add('opacity-60', 'pointer-events-none');
+    submitLabel.textContent = 'Invio in corso…';
+
+    const fd = new FormData(form);
+    const payload = {
+      first_name: String(fd.get('first_name') ?? '').trim(),
+      last_name: String(fd.get('last_name') ?? '').trim(),
+      email: String(fd.get('email') ?? '').trim(),
+      phone: String(fd.get('phone') ?? '').trim(),
+      provincia: String(fd.get('provincia') ?? '').trim(),
+      message: String(fd.get('message') ?? '').trim(),
+      consent: fd.get('consent') === 'on',
+      // tutti i parametri di tracking letti dall'URL/sessione
+      ...readTracking(),
+    };
+
+    try {
+      const res = await fetch('/api/lead', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload),
+      });
+
+      if (!res.ok) throw new Error(`HTTP ${res.status}`);
+
+      // evento Lead (tracciamento dietro consenso — gestito in tracking.ts)
+      window.dispatchEvent(new CustomEvent('swapa:lead'));
+
+      // redirect alla thank-you con prefill Calendly (nome/cognome separati + email).
+      // Il telefono non viene passato: il campo telefono nativo di Calendly non è
+      // precompilabile (vincolo Calendly). Resta comunque nel lead inviato a n8n.
+      const tyUrl = new URL('/thank-you', window.location.origin);
+      tyUrl.searchParams.set('first_name', payload.first_name);
+      tyUrl.searchParams.set('last_name', payload.last_name);
+      tyUrl.searchParams.set('email', payload.email);
+      tyUrl.searchParams.set('name', `${payload.first_name} ${payload.last_name}`.trim());
+      window.location.href = tyUrl.toString();
+    } catch (err) {
+      console.error('Lead submit failed', err);
+      submitBtn.disabled = false;
+      submitBtn.classList.remove('opacity-60', 'pointer-events-none');
+      submitLabel.textContent = 'Prenota il tuo test drive';
+      showError('Qualcosa è andato storto. Riprova tra un istante o scrivici a info@swapa.it.');
+    }
+  });
+</script>

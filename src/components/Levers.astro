@@ -1,0 +1,48 @@
+---
+// "Perché SWAPA" — le leve comunicative (vedi §2/§5).
+// Label uppercase + 1 riga body. Niente schede tecniche affollate.
+const levers = [
+  {
+    title: 'Design iconico',
+    body: "Non somiglia a nient'altro in strada. E si vede.",
+  },
+  {
+    title: 'Zero compromessi',
+    body: 'Clima, display, finiture curate: dentro c’è tutto.',
+  },
+  {
+    title: 'Touch-Parking™',
+    body: 'Entri dove un’auto non entra, parcheggi dove sta uno scooter.',
+  },
+  {
+    title: 'Sicurezza Monocoque™',
+    body: 'Telaio in acciaio e alluminio, fabbricato come un’auto vera.',
+  },
+];
+---
+<section id="perche" class="section-pad bg-ink">
+  <div class="mx-auto max-w-content">
+    <p class="eyebrow mb-4">Perché SWAPA</p>
+    <h2 class="max-w-2xl text-3xl font-800 uppercase leading-tight tracking-tight md:text-4xl">
+      Gioca in un altro campionato.
+    </h2>
+
+    <div class="mt-12 grid gap-px overflow-hidden rounded-2xl border border-white/10 bg-white/10 sm:grid-cols-2">
+      {levers.map((l) => (
+        <div class="group bg-ink p-7 transition-colors duration-300 hover:bg-white/[0.03] md:p-9">
+          <h3 class="text-sm font-700 uppercase tracking-widest text-accent">
+            {l.title}
+          </h3>
+          <p class="mt-3 text-lg font-300 leading-relaxed text-white/80">
+            {l.body}
+          </p>
+        </div>
+      ))}
+    </div>
+
+    <!-- Riga 100% elettrica → Area B/C (leva razionale) -->
+    <p class="mt-8 text-sm font-400 text-muted">
+      100% elettrica — accesso libero alle ZTL ambientali di Milano, Area B e Area C.
+    </p>
+  </div>
+</section>

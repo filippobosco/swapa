@@ -1,0 +1,57 @@
+---
+// "Com'è il test drive" — abbassa la barriera (vedi §4/§5).
+// Rassicurazione, non logistica fredda. Usa la foto interni come prova di "zero compromessi".
+const points = [
+  {
+    label: "Un'ora al volante",
+    body: 'Per le tue strade di sempre, con calma.',
+  },
+  {
+    label: 'Ti basta il patentino AM',
+    body: 'È un quadriciclo leggero L6e: nessuna patente B richiesta.',
+  },
+  {
+    label: 'Nessuna pressione',
+    body: 'Niente venditore addosso. Solo tu e SWAPA.',
+  },
+];
+---
+<section id="test-drive" class="bg-cloud text-ink">
+  <div class="mx-auto grid max-w-content items-center gap-12 px-6 py-20 md:grid-cols-2 md:px-10 md:py-28">
+    <div class="order-2 md:order-1">
+      <p class="text-xs font-500 uppercase tracking-widest2 text-accent-ink">Com'è il test drive</p>
+      <h2 class="mt-4 text-3xl font-800 uppercase leading-tight tracking-tight md:text-4xl">
+        Sali, guida,<br />decidi con calma.
+      </h2>
+      <p class="mt-5 max-w-md text-lg font-300 leading-relaxed text-ink/70">
+        Ti aspettiamo a Pero, a due passi da Milano. È gratuito e senza impegno:
+        l'unica cosa che ti chiediamo è di metterti al volante.
+      </p>
+
+      <ul class="mt-9 space-y-6">
+        {points.map((p) => (
+          <li class="flex gap-4">
+            <span class="mt-1.5 h-2.5 w-2.5 shrink-0 rounded-full bg-accent" aria-hidden="true"></span>
+            <div>
+              <p class="font-700 text-ink">{p.label}</p>
+              <p class="mt-0.5 font-300 text-ink/60">{p.body}</p>
+            </div>
+          </li>
+        ))}
+      </ul>
+
+      <a href="#form" class="btn-accent mt-10">Prenota il tuo test drive</a>
+    </div>
+
+    <div class="order-1 md:order-2">
+      <img
+        src="/images/interior-colors.png"
+        alt="Interni SWAPA — display, clima e finiture curate"
+        width="3840"
+        height="2400"
+        loading="lazy"
+        class="w-full rounded-2xl bg-white object-cover shadow-xl"
+      />
+    </div>
+  </div>
+</section>

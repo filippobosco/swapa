@@ -1,0 +1,133 @@
+---
+// Banner consenso cookie GDPR (vedi §8).
+// Default privacy-preserving: NESSUN pixel parte finché l'utente non acconsente.
+// Gli ID di tracciamento arrivano da env PUBLIC_* (vuoti finché non pronti → tag non caricati).
+const META_PIXEL_ID = import.meta.env.PUBLIC_META_PIXEL_ID ?? '';
+const GA4_ID = import.meta.env.PUBLIC_GA4_MEASUREMENT_ID ?? '';
+const GOOGLE_ADS_ID = import.meta.env.PUBLIC_GOOGLE_ADS_ID ?? '';
+---
+<div
+  id="consent-banner"
+  class="fixed inset-x-0 bottom-0 z-50 hidden border-t border-white/10 bg-ink/95 backdrop-blur"
+  role="dialog"
+  aria-live="polite"
+  aria-label="Consenso cookie"
+>
+  <div class="mx-auto flex max-w-content flex-col gap-4 px-6 py-5 md:flex-row md:items-center md:justify-between md:px-10">
+    <p class="text-sm font-300 leading-relaxed text-white/70">
+      Usiamo cookie tecnici e, previo consenso, cookie di statistica e marketing
+      (Meta, Google) per migliorare le campagne.
+      <a href="https://www.swapa.it/privacy-policy" target="_blank" rel="noopener noreferrer"
+         class="text-accent underline underline-offset-2">Privacy policy</a>.
+    </p>
+    <div class="flex shrink-0 gap-3">
+      <button id="consent-reject" type="button"
+        class="rounded-full border border-white/20 px-5 py-2.5 text-sm font-500 text-white/80 transition-colors hover:bg-white/5">
+        Rifiuta
+      </button>
+      <button id="consent-accept" type="button"
+        class="rounded-full bg-accent px-5 py-2.5 text-sm font-700 text-accent-ink transition-transform hover:scale-[1.03] hover:bg-accent-alt">
+        Accetta
+      </button>
+    </div>
+  </div>
+</div>
+
+<script
+  is:inline
+  define:vars={{ META_PIXEL_ID, GA4_ID, GOOGLE_ADS_ID }}
+>
+  (function () {
+    const STORAGE_KEY = 'swapa_consent'; // 'granted' | 'denied'
+    const banner = document.getElementById('consent-banner');
+
+    // ── Caricamento tag SOLO dopo consenso ──
+    function loadTrackers() {
+      // Meta Pixel
+      if (META_PIXEL_ID) {
+        !(function (f, b, e, v, n, t, s) {
+          if (f.fbq) return;
+          n = f.fbq = function () {
+            n.callMethod ? n.callMethod.apply(n, arguments) : n.queue.push(arguments);
+          };
+          if (!f._fbq) f._fbq = n;
+          n.push = n; n.loaded = !0; n.version = '2.0'; n.queue = [];
+          t = b.createElement(e); t.async = !0; t.src = v;
+          s = b.getElementsByTagName(e)[0]; s.parentNode.insertBefore(t, s);
+        })(window, document, 'script', 'https://connect.facebook.net/en_US/fbevents.js');
+        window.fbq('init', META_PIXEL_ID);
+        window.fbq('track', 'PageView');
+      }
+
+      // GA4 + Google Ads (gtag condiviso)
+      const gtagId = GA4_ID || GOOGLE_ADS_ID;
+      if (gtagId) {
+        const s = document.createElement('script');
+        s.async = true;
+        s.src = 'https://www.googletagmanager.com/gtag/js?id=' + gtagId;
+        document.head.appendChild(s);
+        window.dataLayer = window.dataLayer || [];
+        window.gtag = function () { window.dataLayer.push(arguments); };
+        window.gtag('js', new Date());
+        if (GA4_ID) window.gtag('config', GA4_ID);
+        if (GOOGLE_ADS_ID) window.gtag('config', GOOGLE_ADS_ID);
+      }
+
+      window.__swapaConsent = 'granted';
+
+      // Eventi differiti accumulati prima del consenso → rispara ora
+      fireScrollIfPending();
+    }
+
+    function setConsent(value) {
+      try { localStorage.setItem(STORAGE_KEY, value); } catch (e) {}
+      if (banner) banner.classList.add('hidden');
+      if (value === 'granted') loadTrackers();
+      else window.__swapaConsent = 'denied';
+    }
+
+    // mostra il banner solo se non c'è già una scelta
+    let stored = null;
+    try { stored = localStorage.getItem(STORAGE_KEY); } catch (e) {}
+    if (stored === 'granted') {
+      loadTrackers();
+    } else if (stored === 'denied') {
+      window.__swapaConsent = 'denied';
+    } else if (banner) {
+      banner.classList.remove('hidden');
+    }
+
+    document.getElementById('consent-accept')?.addEventListener('click', () => setConsent('granted'));
+    document.getElementById('consent-reject')?.addEventListener('click', () => setConsent('denied'));
+
+    // ── Eventi standard (sparano solo se consenso granted) ──
+    function track(metaEvent, gtagEvent) {
+      if (window.__swapaConsent !== 'granted') return;
+      if (window.fbq) window.fbq('track', metaEvent);
+      if (window.gtag && gtagEvent) window.gtag('event', gtagEvent);
+    }
+
+    // Lead (dispatchato dal form al submit OK)
+    window.addEventListener('swapa:lead', () => track('Lead', 'generate_lead'));
+
+    // Scroll 50%
+    let scroll50Fired = false;
+    let scroll50Pending = false;
+    function onScroll() {
+      const scrolled = (window.scrollY + window.innerHeight) / document.body.scrollHeight;
+      if (scrolled >= 0.5 && !scroll50Fired) {
+        scroll50Fired = true;
+        if (window.__swapaConsent === 'granted') {
+          track('ViewContent', 'scroll_50');
+        } else {
+          scroll50Pending = true; // riparte dopo eventuale consenso
+        }
+        window.removeEventListener('scroll', onScroll);
+      }
+    }
+    function fireScrollIfPending() {
+      if (scroll50Pending) { track('ViewContent', 'scroll_50'); scroll50Pending = false; }
+    }
+    window.addEventListener('scroll', onScroll, { passive: true });
+  })();
+</script>

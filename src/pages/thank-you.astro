@@ -1,0 +1,178 @@
+---
+import Base from '../layouts/Base.astro';
+import ConsentBanner from '../components/ConsentBanner.astro';
+
+export const prerender = false;
+
+// Thank-you (vedi §5/§7). Calendly inline con prefill nome/email via query param.
+const calendlyBase = import.meta.env.PUBLIC_CALENDLY_URL ?? 'https://calendly.com/swapa-info/swapa';
+
+// Costruiamo l'URL completo (prefill + tema) lato server, così `data-url` è già pronto
+// nell'HTML e l'auto-init di widget.js può partire senza dipendere da timing JS.
+//
+// NOTA TEMA CALENDLY: sul piano gratuito Calendly applica `background_color` e
+// `text_color` (sfondo scuro + label chiare), ma IGNORA `primary_color` → il pulsante
+// resta blu e gli input restano bianchi. Per attivare il verde acqua del brand e lo
+// styling completo serve un piano Calendly Pro: i parametri qui sotto sono già pronti
+// e si attiveranno automaticamente all'upgrade, senza modifiche al codice.
+const cu = new URL(calendlyBase);
+cu.searchParams.set('hide_gdpr_banner', '1');
+cu.searchParams.set('background_color', '1A1A1A');
+cu.searchParams.set('text_color', 'F0F0F0');
+cu.searchParams.set('primary_color', '4ECBA8');
+const calendlyUrl = cu.toString();
+---
+<Base
+  title="Grazie — Prenota il tuo slot | SWAPA"
+  description="Scegli quando venire a provare SWAPA a Pero, Via Isaac Newton 9."
+  noindex={true}
+>
+  <!-- Pre-connessione: apre in anticipo la connessione ai domini Calendly -->
+  <Fragment slot="head">
+    <link rel="preconnect" href="https://assets.calendly.com" crossorigin />
+    <link rel="preconnect" href="https://calendly.com" crossorigin />
+    <link rel="stylesheet" href="https://assets.calendly.com/assets/external/widget.css" />
+  </Fragment>
+
+  <main class="mx-auto flex min-h-[100svh] max-w-content flex-col px-6 py-12 md:px-10">
+    <a href="/" aria-label="SWAPA" class="mb-10 inline-block">
+      <img src="/images/logo-swapa.png" alt="SWAPA" width="563" height="329" class="h-9 w-auto" />
+    </a>
+
+    <div class="mx-auto w-full max-w-2xl text-center">
+      <p class="eyebrow mb-4">Richiesta ricevuta</p>
+      <h1 class="text-3xl font-800 uppercase leading-tight tracking-tight md:text-5xl">
+        Perfetto.<br />Ora scegli quando venire.
+      </h1>
+      <p class="mx-auto mt-5 max-w-md font-300 text-white/65">
+        Prenota il tuo slot: ti aspettiamo a Pero, Via Isaac Newton 9.
+      </p>
+    </div>
+
+    <!-- Contenitore Calendly: altezza adeguata (no overflow-hidden: il widget
+         gestisce il proprio scroll interno). -->
+    <div class="relative mx-auto mt-10 w-full max-w-3xl">
+      <!-- Skeleton di caricamento (sta DIETRO l'embed; nascosto quando l'iframe è pronto) -->
+      <div
+        id="calendly-skeleton"
+        class="pointer-events-none absolute inset-0 z-0 flex flex-col items-center justify-center gap-4 rounded-2xl border border-white/10 bg-white/[0.03]"
+        aria-hidden="true"
+      >
+        <span class="h-9 w-9 animate-spin rounded-full border-2 border-white/15 border-t-accent"></span>
+        <span class="text-sm font-300 text-white/50">Carico il calendario…</span>
+      </div>
+
+      <!-- Pattern ufficiale Calendly: classe + data-url già valorizzato → auto-init -->
+      <div
+        id="calendly-embed"
+        class="calendly-inline-widget relative z-10 w-full rounded-2xl"
+        data-url={calendlyUrl}
+        data-prefill-base={calendlyUrl}
+        style="min-width:320px;height:1080px;"
+      ></div>
+    </div>
+
+    <p class="mx-auto mt-8 text-center text-xs font-300 text-white/40">
+      Problemi con la prenotazione? Scrivici a
+      <a href="mailto:info@swapa.it" class="text-accent">info@swapa.it</a>
+    </p>
+  </main>
+
+  <ConsentBanner />
+
+  <script is:inline>
+    (function () {
+      var params = new URLSearchParams(window.location.search);
+      var firstName = params.get('first_name') || '';
+      var lastName = params.get('last_name') || '';
+      var email = params.get('email') || '';
+      // 'name' concatenato come fallback (event type con singolo campo nome)
+      var name = params.get('name') || (firstName + ' ' + lastName).trim();
+
+      var embed = document.getElementById('calendly-embed');
+      var skeleton = document.getElementById('calendly-skeleton');
+
+      // Aggiungiamo il prefill (nome/cognome separati + email) direttamente all'URL:
+      // così funziona sia con l'auto-init sia con l'init manuale.
+      // NB: il telefono nativo di Calendly non è precompilabile (vincolo Calendly).
+      if (embed) {
+        try {
+          var u = new URL(embed.getAttribute('data-url'));
+          if (name) u.searchParams.set('name', name);
+          if (firstName) u.searchParams.set('first_name', firstName);
+          if (lastName) u.searchParams.set('last_name', lastName);
+          if (email) u.searchParams.set('email', email);
+          embed.setAttribute('data-url', u.toString());
+        } catch (e) {}
+      }
+
+      // Nasconde lo skeleton quando Calendly ha iniettato l'iframe.
+      function hideSkeleton() {
+        if (skeleton) skeleton.style.display = 'none';
+      }
+      function iframeReady() {
+        return embed && embed.querySelector('iframe');
+      }
+
+      // Inizializza il widget. Riprova finché widget.js non è pronto.
+      function tryInit() {
+        if (iframeReady()) { hideSkeleton(); return true; }      // già auto-inizializzato
+        if (window.Calendly && embed) {
+          window.Calendly.initInlineWidget({
+            url: embed.getAttribute('data-url'),
+            parentElement: embed,
+            prefill: {
+              name: name,            // fallback (campo nome singolo)
+              firstName: firstName,  // → campo "Nome" Calendly
+              lastName: lastName,    // → campo "Cognome" Calendly
+              email: email,
+            },
+          });
+          return true;
+        }
+        return false;
+      }
+
+      // Carichiamo widget.js qui (con callback affidabile) invece di affidarci al defer.
+      var s = document.createElement('script');
+      s.src = 'https://assets.calendly.com/assets/external/widget.js';
+      s.async = true;
+      s.onload = tryInit;
+      document.body.appendChild(s);
+
+      // Polling di sicurezza (copre il caso in cui onload sia già passato o l'init tardi).
+      var tries = 0;
+      var iv = setInterval(function () {
+        if (tryInit() || ++tries > 100) clearInterval(iv);
+      }, 100);
+
+      // Quando compare l'iframe, togli lo skeleton.
+      var iv2 = setInterval(function () {
+        if (iframeReady()) { hideSkeleton(); clearInterval(iv2); }
+        else if (tries > 100) clearInterval(iv2);
+      }, 150);
+
+      // Fail-safe: dopo 10s mostra comunque l'embed (e un fallback link se vuoto).
+      setTimeout(function () {
+        clearInterval(iv); clearInterval(iv2);
+        if (!iframeReady() && skeleton) {
+          skeleton.innerHTML =
+            '<p class="text-sm font-300 text-white/60 px-6 text-center">Il calendario non si è caricato. ' +
+            '<a class="text-accent underline" target="_blank" rel="noopener" href="' +
+            (embed ? embed.getAttribute('data-url') : 'https://calendly.com/swapa-info/swapa') +
+            '">Apri la prenotazione →</a></p>';
+        }
+      }, 10000);
+
+      // BookingCompleted — slot confermato (fonte affidabile: webhook Calendly → n8n, §8)
+      window.addEventListener('message', function (e) {
+        if (e.data && e.data.event === 'calendly.event_scheduled') {
+          if (window.__swapaConsent === 'granted') {
+            if (window.fbq) window.fbq('track', 'Schedule');
+            if (window.gtag) window.gtag('event', 'booking_completed');
+          }
+        }
+      });
+    })();
+  </script>
+</Base>
