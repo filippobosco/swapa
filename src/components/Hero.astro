@@ -4,15 +4,21 @@
 // (1 ora, a Paderno). CTA in accent → scrolla al form. Mobile-first.
 ---
 <section id="hero" class="relative isolate flex min-h-[100svh] flex-col justify-end overflow-hidden">
-  <!-- Sfondo prodotto -->
-  <img
-    src="/images/exterior.png"
-    alt="SWAPA — la micro auto elettrica urbana"
-    width="2560"
-    height="1440"
-    fetchpriority="high"
+  <!-- Sfondo video prodotto: autoplay muto in loop, con poster come primo frame
+       e fallback. Su prefers-reduced-motion il video resta fermo sul poster. -->
+  <video
     class="absolute inset-0 -z-10 h-full w-full object-cover object-center"
-  />
+    autoplay
+    muted
+    loop
+    playsinline
+    preload="metadata"
+    poster="/images/hero-poster.jpg"
+    aria-hidden="true"
+  >
+    <source src="/videos/hero.webm" type="video/webm" />
+    <source src="/videos/hero.mp4" type="video/mp4" />
+  </video>
   <!-- Overlay scuro per leggibilità (taglio editoriale) -->
   <div
     class="absolute inset-0 -z-10 bg-gradient-to-t from-ink via-ink/70 to-ink/30"
@@ -60,3 +66,13 @@
     to   { opacity: 1; transform: translateY(0); }
   }
 </style>
+
+<script>
+  // Rispetta prefers-reduced-motion: se l'utente preferisce meno animazioni,
+  // fermiamo il video sul poster invece di farlo andare in loop.
+  const hero = document.querySelector('#hero video') as HTMLVideoElement | null;
+  if (hero && window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
+    hero.removeAttribute('autoplay');
+    hero.pause();
+  }
+</script>
