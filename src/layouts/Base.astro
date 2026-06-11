@@ -14,9 +14,12 @@ const {
   noindex = false,
 } = Astro.props;
 
-// URL assoluto per l'immagine OG (richiesto da molti scraper social: FB, WhatsApp).
-// Usa `site` da astro.config; fallback al percorso relativo se non disponibile.
-const ogImage = new URL('/images/hero-share.png', Astro.site ?? Astro.url).href;
+// URL assoluti per OG (richiesti da molti scraper social: FB, WhatsApp).
+// In SSR Astro.url ha host interno (localhost): usiamo Astro.site come base per il
+// dominio, combinandolo col solo pathname della richiesta corrente.
+const siteBase = Astro.site ?? new URL(Astro.url.origin);
+const ogImage = new URL('/images/hero-share.png', siteBase).href;
+const ogUrl = new URL(Astro.url.pathname, siteBase).href;
 ---
 
 <!doctype html>
@@ -36,7 +39,7 @@ const ogImage = new URL('/images/hero-share.png', Astro.site ?? Astro.url).href;
     <meta property="og:title" content={title} />
     <meta property="og:description" content={description} />
     <meta property="og:image" content={ogImage} />
-    <meta property="og:url" content={Astro.url.href} />
+    <meta property="og:url" content={ogUrl} />
     <meta name="twitter:card" content="summary_large_image" />
 
     <!-- Poppins (vedi §3) -->
