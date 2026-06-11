@@ -1,0 +1,83 @@
+---
+// Showcase prodotto — selettore colori interattivo (vedi richiesta cliente:
+// "si vede poco il prodotto"). Mostra l'auto INTERA; l'utente clicca i 4 swatch
+// e la colorazione cambia. Immagini render pulite scaricate dal sito SWAPA.
+const colors = [
+  { id: 'green',  name: 'Emerald Green',  swatch: '#1F4E3D', img: '/images/color-green.png' },
+  { id: 'silver', name: 'Jumana Silver',  swatch: '#C8CACC', img: '/images/color-silver.png' },
+  { id: 'pink',   name: 'Aygul Pink',     swatch: '#E8B9C4', img: '/images/color-pink.png' },
+  { id: 'grey',   name: 'Concrete Grey',  swatch: '#6E7173', img: '/images/color-grey.png' },
+];
+const defaultId = 'green';
+---
+<section id="colori" class="section-pad bg-cloud text-ink">
+  <div class="mx-auto max-w-content">
+    <p class="text-xs font-500 uppercase tracking-widest2 text-accent-ink">La trovi così</p>
+    <h2 class="mt-4 max-w-2xl text-3xl font-800 uppercase leading-tight tracking-tight md:text-4xl">
+      Scegli la tua. <span class="text-accent-ink">Si fa notare comunque.</span>
+    </h2>
+
+    <!-- Immagine auto: tutte precaricate, una sola visibile -->
+    <div class="relative mt-10 aspect-[1500/451] w-full overflow-hidden rounded-2xl bg-white">
+      {colors.map((c) => (
+        <img
+          src={c.img}
+          alt={`SWAPA ${c.name}`}
+          width="1500"
+          height="451"
+          loading="lazy"
+          data-color-img={c.id}
+          class={`absolute inset-0 h-full w-full object-contain transition-opacity duration-500 ${c.id === defaultId ? 'opacity-100' : 'opacity-0'}`}
+        />
+      ))}
+    </div>
+
+    <!-- Selettore -->
+    <div class="mt-8 flex flex-col items-center gap-5">
+      <p id="color-name" class="text-sm font-700 uppercase tracking-widest text-ink">
+        {colors.find((c) => c.id === defaultId)?.name}
+      </p>
+      <div class="flex items-center gap-4" role="group" aria-label="Scegli la colorazione">
+        {colors.map((c) => (
+          <button
+            type="button"
+            data-color-btn={c.id}
+            aria-label={c.name}
+            aria-pressed={c.id === defaultId ? 'true' : 'false'}
+            class="h-10 w-10 rounded-full border-2 transition-transform duration-200 hover:scale-110 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent-ink"
+            style={`background-color:${c.swatch}; border-color:${c.id === defaultId ? '#0A3D2E' : 'rgba(10,10,10,0.15)'}`}
+          ></button>
+        ))}
+      </div>
+    </div>
+  </div>
+</section>
+
+<script>
+  const buttons = document.querySelectorAll<HTMLButtonElement>('[data-color-btn]');
+  const images = document.querySelectorAll<HTMLImageElement>('[data-color-img]');
+  const nameEl = document.getElementById('color-name');
+  const names: Record<string, string> = {
+    green: 'Emerald Green',
+    silver: 'Jumana Silver',
+    pink: 'Aygul Pink',
+    grey: 'Concrete Grey',
+  };
+
+  function selectColor(id: string) {
+    images.forEach((img) => {
+      img.classList.toggle('opacity-100', img.dataset.colorImg === id);
+      img.classList.toggle('opacity-0', img.dataset.colorImg !== id);
+    });
+    buttons.forEach((btn) => {
+      const active = btn.dataset.colorBtn === id;
+      btn.setAttribute('aria-pressed', active ? 'true' : 'false');
+      btn.style.borderColor = active ? '#0A3D2E' : 'rgba(10,10,10,0.15)';
+    });
+    if (nameEl && names[id]) nameEl.textContent = names[id];
+  }
+
+  buttons.forEach((btn) => {
+    btn.addEventListener('click', () => selectColor(btn.dataset.colorBtn as string));
+  });
+</script>
