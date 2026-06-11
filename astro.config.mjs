@@ -8,5 +8,5 @@ export default defineConfig({
   output: 'server',
   adapter: vercel(),
   integrations: [tailwind()],
-  site: 'https://swapa.it',
+  site: 'https://testdrive.swapa.it',
 });

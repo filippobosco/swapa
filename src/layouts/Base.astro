@@ -13,6 +13,10 @@ const {
   description = "L'icona elettrica di Milano. Un'ora al volante, senza impegno. Ti aspettiamo a Paderno, a due passi da Milano.",
   noindex = false,
 } = Astro.props;
+
+// URL assoluto per l'immagine OG (richiesto da molti scraper social: FB, WhatsApp).
+// Usa `site` da astro.config; fallback al percorso relativo se non disponibile.
+const ogImage = new URL('/images/hero-share.png', Astro.site ?? Astro.url).href;
 ---
 
 <!doctype html>
@@ -29,7 +33,9 @@ const {
     <meta property="og:type" content="website" />
     <meta property="og:title" content={title} />
     <meta property="og:description" content={description} />
-    <meta property="og:image" content="/images/hero-share.png" />
+    <meta property="og:image" content={ogImage} />
+    <meta property="og:url" content={Astro.url.href} />
+    <meta name="twitter:card" content="summary_large_image" />
 
     <!-- Poppins (vedi §3) -->
     <link rel="preconnect" href="https://fonts.googleapis.com" />
