@@ -15,9 +15,14 @@ const {
 } = Astro.props;
 
 // URL assoluti per OG (richiesti da molti scraper social: FB, WhatsApp).
-// In SSR Astro.url ha host interno (localhost): usiamo Astro.site come base per il
-// dominio, combinandolo col solo pathname della richiesta corrente.
-const siteBase = Astro.site ?? new URL(Astro.url.origin);
+// In SSR su Vercel Astro.url ha host interno (localhost) e Astro.site può non essere
+// disponibile a runtime: ricaviamo il dominio reale dall'header Host della richiesta,
+// con fallback su Astro.site e infine sul dominio noto.
+const hostHeader = Astro.request.headers.get('host');
+const proto = Astro.request.headers.get('x-forwarded-proto') ?? 'https';
+const siteBase = hostHeader
+  ? new URL(`${proto}://${hostHeader}`)
+  : (Astro.site ?? new URL('https://testdrive.swapa.it'));
 const ogImage = new URL('/images/hero-share.png', siteBase).href;
 const ogUrl = new URL(Astro.url.pathname, siteBase).href;
 ---
